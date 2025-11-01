@@ -1,0 +1,68 @@
+# Node modules
+node_modules/
+
+# TypeScript build output
+dist/
+build/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE/Editor specific files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+*.tmp
+*.bak
+*.orig
+*.idea/
+
+# Jest coverage reports
+coverage/
+
+# TypeScript
+*.tsbuildinfo
+
+# Dependency directories
+jspm_packages/
+
+# NPM cache
+.npm/
+
+# Yarn cache
+.yarn/
+
+# Yarn lock file
+yarn.lock
+
+# Debug log files
+debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Optional npm cache directory
+.cache/
+
+# Project-specific
+*.tgz
+*.pem
+
+# Miscellaneous
+*.tmp
+*.bak
+*.swp
+*.swo
+*.DS_Store
