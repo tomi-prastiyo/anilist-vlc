@@ -1,4 +1,4 @@
-import DiscordRPC from "discord-rpc";
+import { Client } from "@xhayper/discord-rpc";
 import { config } from "../utils/config";
 import getStatus from "../infrastructure/vlc";
 import titleParser from "../utils/title_parser";
@@ -8,8 +8,8 @@ import generateToken from "../api/auth/gen_token";
 import setAuthToken from "../api/auth/set_auth_token";
 import setJwtToken from "../api/auth/set_jwt_token";
 
-const rpc = new DiscordRPC.Client({ transport: "ipc" });
 const clientId = config.discordClientId;
+const rpc = new Client({ clientId });
 
 interface SavedInfo {
   title: string;
@@ -91,7 +91,7 @@ const setStatus = async () => {
   const vlcStatus = await getStatus();
   if (vlcStatus === null) {
     console.log("Error retrieving VLC status");
-    rpc.clearActivity();
+    rpc.user?.clearActivity();
     return;
   }
 
@@ -120,7 +120,7 @@ const setStatus = async () => {
     prevState = stateCapitalized;
   }
 
-  await rpc.setActivity(activity);
+  await rpc.user?.setActivity(activity);
   await updateAniList(vlcStatus, parsedTitle);
 };
 
@@ -138,4 +138,4 @@ rpc.on("ready", async () => {
   setInterval(setStatus, 15e3);
 });
 
-rpc.login({ clientId });
+rpc.login();
