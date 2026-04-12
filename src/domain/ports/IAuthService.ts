@@ -14,12 +14,7 @@ export interface IAuthService {
   promptAndSaveAuthCode(): Promise<void>;
 
   /**
-   * Generate access token from auth code
+   * Generate access token from auth code and save it
    */
   generateToken(): Promise<string | null>;
-
-  /**
-   * Prompt user for JWT token and save it
-   */
-  promptAndSaveJwtToken(): Promise<void>;
 }

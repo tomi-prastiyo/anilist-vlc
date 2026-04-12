@@ -67,7 +67,16 @@ export class StatusPollingController {
       console.log("Connected as", this.presenceService.getUsername());
 
       // Handle authentication if needed
-      await this.authenticate.execute(this.hasAuthCode, this.hasAccessToken);
+      const didAuthenticate = await this.authenticate.execute(
+        this.hasAuthCode,
+        this.hasAccessToken,
+      );
+
+      if (didAuthenticate) {
+        console.log("\n✅ Authentication completed! Tokens saved to .env.");
+        console.log("Please restart the application to use the new tokens.");
+        process.exit(0);
+      }
 
       // Start polling
       await this.pollStatus();

@@ -47,7 +47,7 @@ export const appConfig: AppConfig = {
     clientId: process.env.DISCORD_CLIENT || "",
   },
   paths: {
-    envFile: path.resolve(__dirname, "../../.env"),
+    envFile: path.resolve(process.cwd(), ".env"),
   },
 };
 

@@ -9,7 +9,7 @@ interface AuthConfig {
   clientId: string;
   clientSecret: string;
   redirectUri: string;
-  authCode?: string;
+  authCode: string;
   envPath: string;
 }
 
@@ -31,6 +31,7 @@ export class AniListAuthAdapter implements IAuthService {
 
   async promptAndSaveAuthCode(): Promise<void> {
     const code = await this.promptUser("Enter the authorization code: ");
+    this.config.authCode = code;
     this.updateEnvFile("ANILIST_AUTHTOKEN", code);
     console.log("Authentication code saved!");
   }
@@ -46,8 +47,10 @@ export class AniListAuthAdapter implements IAuthService {
       });
 
       if (response.status === 200) {
-        console.log("Token generated successfully");
-        return response.data.access_token;
+        const accessToken = response.data.access_token;
+        this.updateEnvFile("ANILIST_JWT", accessToken);
+        console.log("Token generated and saved successfully");
+        return accessToken;
       }
 
       return null;
@@ -55,12 +58,6 @@ export class AniListAuthAdapter implements IAuthService {
       console.error("Error generating token:", error);
       return null;
     }
-  }
-
-  async promptAndSaveJwtToken(): Promise<void> {
-    const token = await this.promptUser("Enter the JWT token: ");
-    this.updateEnvFile("ANILIST_JWT", token);
-    console.log("JWT token saved!");
   }
 
   private promptUser(question: string): Promise<string> {
