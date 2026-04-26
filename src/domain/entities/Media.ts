@@ -6,6 +6,14 @@ export interface Media {
   id: number;
   title: string;
   coverImage?: string;
+  episodes?: number;
+  genres?: string[];
+  score?: number;
+  startDate?: { year?: number; month?: number; day?: number };
+  season?: string;
+  status?: AnimeStatus;
+  description?: string;
+  averageScore?: number;
 }
 
 export interface MediaListEntry {
@@ -22,3 +30,9 @@ export type MediaStatus =
   | "DROPPED"
   | "PAUSED"
   | "REPEATING";
+
+export type AnimeStatus =
+  | "ONGOING"
+  | "FINISHED"
+  | "NOT_YET_RELEASED"
+  | "CANCELLED";

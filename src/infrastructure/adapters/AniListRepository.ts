@@ -104,6 +104,12 @@ export class AniListRepository implements IAnimeRepository {
             id
             title { romaji }
             coverImage { large }
+            episodes
+            genres
+            averageScore
+            status
+            season
+            startDate { year month day }
           }
         }
       }
@@ -115,6 +121,12 @@ export class AniListRepository implements IAnimeRepository {
           id: number;
           title: { romaji: string };
           coverImage: { large: string };
+          episodes?: number;
+          genres?: string[];
+          averageScore?: number;
+          status?: string;
+          season?: string;
+          startDate?: { year?: number; month?: number; day?: number };
         }>;
       };
     }>(query, { search: title, page: 1, perPage: 20 });
@@ -123,6 +135,12 @@ export class AniListRepository implements IAnimeRepository {
       id: item.id,
       title: item.title.romaji,
       coverImage: item.coverImage?.large,
+      episodes: item.episodes,
+      genres: item.genres,
+      averageScore: item.averageScore,
+      status: item.status as any,
+      season: item.season,
+      startDate: item.startDate,
     }));
   }
 
@@ -206,6 +224,13 @@ export class AniListRepository implements IAnimeRepository {
           id
           title { romaji }
           coverImage { large }
+          episodes
+          genres
+          averageScore
+          status
+          season
+          startDate { year month day }
+          description
         }
       }
     `;
@@ -215,6 +240,13 @@ export class AniListRepository implements IAnimeRepository {
         id: number;
         title: { romaji: string };
         coverImage: { large: string };
+        episodes?: number;
+        genres?: string[];
+        averageScore?: number;
+        status?: string;
+        season?: string;
+        startDate?: { year?: number; month?: number; day?: number };
+        description?: string;
       };
     }>(query, { mediaId });
 
@@ -222,6 +254,13 @@ export class AniListRepository implements IAnimeRepository {
       id: data.Media.id,
       title: data.Media.title.romaji,
       coverImage: data.Media.coverImage?.large,
+      episodes: data.Media.episodes,
+      genres: data.Media.genres,
+      averageScore: data.Media.averageScore,
+      status: data.Media.status as any,
+      season: data.Media.season,
+      startDate: data.Media.startDate,
+      description: data.Media.description,
     };
   }
 

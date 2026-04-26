@@ -15,12 +15,29 @@ export interface PresenceData {
 }
 
 const DEFAULT_IMAGE = "https://pbs.twimg.com/media/GCSoXH4acAAQWWP.png";
+const DEFAULT_TEXT = "AniList Anime";
+
+interface ImageData {
+  imageUrl: string;
+  imageText: string;
+  avatarUrl: string;
+  avatarText: string;
+  animeUrl?: string;
+  episodes?: number;
+  genres?: string[];
+  score?: number;
+  season?: string;
+  year?: number;
+  status?: string;
+}
 
 /**
  * Use Case: Build Presence Activity
  * Constructs Discord Rich Presence payload from playback data
  */
 export class BuildPresenceUseCase {
+  private imageCache = new Map<string, ImageData>();
+
   constructor(
     private readonly animeRepository: IAnimeRepository,
     private readonly mediaPlayer: IMediaPlayerAdapter,
@@ -43,6 +60,7 @@ export class BuildPresenceUseCase {
       parsedTitle,
       imageData,
       stateLabel,
+      username,
     );
 
     return { activity, parsedTitle, playbackStatus, stateLabel };
@@ -51,55 +69,157 @@ export class BuildPresenceUseCase {
   private async getImageData(
     title: string,
     username: string,
-  ): Promise<{ imageUrl: string; imageText: string }> {
+  ): Promise<ImageData> {
+    const cacheKey = `${username}:${title}`;
+    if (this.imageCache.has(cacheKey)) {
+      return this.imageCache.get(cacheKey)!;
+    }
+
+    let result: ImageData | null = null;
+
     try {
-      // Try to get anime cover image
+      // Try to get anime cover image and details
       const searchResults = await this.animeRepository.searchMedia(title);
       if (searchResults.length > 0) {
         const media = await this.animeRepository.getMediaCover(
           searchResults[0].id,
         );
+        const avatarUrl = await this.animeRepository.getUserAvatar(username);
+        const animeUrl = `https://anilist.co/anime/${searchResults[0].id}`;
         if (media?.coverImage) {
-          return { imageUrl: media.coverImage, imageText: media.title };
+          result = {
+            imageUrl: media.coverImage,
+            imageText: media.title,
+            avatarUrl: avatarUrl || DEFAULT_IMAGE,
+            avatarText: username,
+            animeUrl,
+            episodes: media.episodes,
+            genres: media.genres?.slice(0, 3),
+            score: media.averageScore,
+            season: media.season,
+            year: media.startDate?.year,
+            status: media.status,
+          };
         }
       }
     } catch {
       // Fallback to user avatar
+    }
+
+    if (!result) {
       try {
         const avatarUrl = await this.animeRepository.getUserAvatar(username);
         if (avatarUrl) {
-          return { imageUrl: avatarUrl, imageText: username };
+          result = {
+            imageUrl: DEFAULT_IMAGE,
+            imageText: DEFAULT_TEXT,
+            avatarUrl,
+            avatarText: username,
+          };
         }
       } catch {
         // Use default
       }
     }
 
-    return { imageUrl: DEFAULT_IMAGE, imageText: title };
+    if (!result) {
+      result = {
+        imageUrl: DEFAULT_IMAGE,
+        imageText: DEFAULT_TEXT,
+        avatarUrl: DEFAULT_IMAGE,
+        avatarText: username,
+      };
+    }
+
+    this.imageCache.set(cacheKey, result);
+    return result;
   }
 
   private buildActivity(
     status: PlaybackStatus,
     parsed: ParsedTitle,
-    image: { imageUrl: string; imageText: string },
+    image: ImageData,
     stateLabel: string,
+    username: string,
   ): DiscordActivity {
+    const isPlaying = status.state === "playing";
+    const stateIcon = isPlaying ? "▶️" : "⏸️";
+
+    // Build episode progress
+    let episodeInfo = "";
+    if (parsed.episode) {
+      const totalEpisodes = image.episodes || "?";
+      const episodeNum = parseInt(parsed.episode);
+
+      episodeInfo = `${stateIcon} Episode ${parsed.episode}/${totalEpisodes}`;
+
+      // Add progress percentage
+      if (image.episodes) {
+        const progressPercent = Math.round((episodeNum / image.episodes) * 100);
+        episodeInfo += ` (${progressPercent}%)`;
+      }
+
+      if (!isPlaying) {
+        episodeInfo += " • Paused";
+      }
+    } else {
+      episodeInfo = `${stateIcon} ${stateLabel}`;
+    }
+
+    // Build details with genre and score
+    let details = image.imageText || parsed.title;
+    if (image.genres && image.genres.length > 0) {
+      const genreList = image.genres.slice(0, 2).join(", ");
+      details = `${image.imageText || parsed.title} • ${genreList}`;
+    }
+
+    // Build state with additional info
+    let state = episodeInfo;
+    if (image.score) {
+      state += ` ★ ${image.score}/100`;
+    }
+    if (image.season && image.year) {
+      state += ` • ${image.season} ${image.year}`;
+    }
+    if (image.status) {
+      const statusEmoji = image.status === "ONGOING" ? "📺" : "✅";
+      state += ` ${statusEmoji}`;
+    }
+
     const activity: DiscordActivity = {
-      details: image.imageText || parsed.title,
-      state: parsed.episode
-        ? `${stateLabel} - Episode ${parsed.episode}`
-        : stateLabel,
+      details,
+      detailsUrl: image.animeUrl,
+      state,
       instance: true,
       largeImageKey: image.imageUrl,
-      largeImageText: image.imageText || parsed.title,
+      largeImageUrl: image.animeUrl || image.imageUrl,
+      largeImageText: `${image.imageText || parsed.title}${image.season ? ` • ${image.season} ${image.year || ""}` : ""}`,
+      smallImageKey: image.avatarUrl,
+      smallImageUrl: `https://anilist.co/user/${username}`,
+      smallImageText: `AniList: ${image.avatarText}`,
       type: 3, // Watching
     };
 
-    if (status.state === "playing") {
+    if (isPlaying) {
       activity.startTimestamp = Math.round(Date.now() / 1000 - status.time);
       activity.endTimestamp = Math.round(
         Date.now() / 1000 + (status.length - status.time),
       );
+    }
+
+    const buttons = [];
+    if (image.animeUrl) {
+      buttons.push({ label: "View Anime", url: image.animeUrl });
+    }
+    if (username) {
+      buttons.push({
+        label: "AniList Profile",
+        url: `https://anilist.co/user/${username}`,
+      });
+    }
+
+    if (buttons.length > 0) {
+      activity.buttons = buttons;
     }
 
     return activity;
