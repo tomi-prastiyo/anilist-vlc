@@ -168,12 +168,6 @@ export class BuildPresenceUseCase {
 
     // Build details with genre and score
     let details = image.imageText || parsed.title;
-    if (image.status) {
-      const status = this.capitalize(
-        image.status.replace(/_/g, " ").toLowerCase(),
-      );
-      details += ` • ${status}`;
-    }
 
     // Build state with additional info
     const stateParts: string[] = [episodeInfo];
