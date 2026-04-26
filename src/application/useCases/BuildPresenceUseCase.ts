@@ -168,23 +168,17 @@ export class BuildPresenceUseCase {
 
     // Build details with genre and score
     let details = image.imageText || parsed.title;
-    if (image.genres && image.genres.length > 0) {
-      const genreList = image.genres.slice(0, 2).join(", ");
-      details = `${image.imageText || parsed.title} • ${genreList}`;
+    if (image.status) {
+      const status = this.capitalize(
+        image.status.replace(/_/g, " ").toLowerCase(),
+      );
+      details += ` • ${status}`;
     }
 
     // Build state with additional info
-    let state = episodeInfo;
-    if (image.score) {
-      state += ` ★ ${image.score}/100`;
-    }
-    if (image.season && image.year) {
-      state += ` • ${image.season} ${image.year}`;
-    }
-    if (image.status) {
-      const statusEmoji = image.status === "ONGOING" ? "📺" : "✅";
-      state += ` ${statusEmoji}`;
-    }
+    const stateParts: string[] = [episodeInfo];
+    if (image.score) stateParts.push(`★ ${image.score}/100`);
+    const state = stateParts.join("  ");
 
     const activity: DiscordActivity = {
       details,
@@ -193,7 +187,13 @@ export class BuildPresenceUseCase {
       instance: true,
       largeImageKey: image.imageUrl,
       largeImageUrl: image.animeUrl || image.imageUrl,
-      largeImageText: `${image.imageText || parsed.title}${image.season ? ` • ${image.season} ${image.year || ""}` : ""}`,
+      largeImageText: [
+        image.imageText || parsed.title,
+        image.season && image.year ? `${image.season} ${image.year}` : null,
+        image.genres?.slice(0, 2).join(", ") ?? null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
       smallImageKey: image.avatarUrl,
       smallImageUrl: `https://anilist.co/user/${username}`,
       smallImageText: `AniList: ${image.avatarText}`,
