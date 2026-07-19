@@ -9,11 +9,11 @@
 ## 🌟 What is this?
 Ever tired of manually updating your episode count on AniList after watching anime on VLC? Want to show off what you're currently watching to your Discord friends? **AniList VLC Sync** is here for you!
 
-This application runs quietly in the background and connects to **VLC Media Player**, **Web Browsers (Crunchyroll & Bilibili)**, **AniList**, and **Discord**. Just sit back, watch your anime, and let the app do the rest.
+This application runs quietly in the background and connects to **VLC Media Player**, **Web Browsers (Crunchyroll, Bilibili, YouTube)**, **AniList**, and **Discord**. Just sit back, watch your anime, and let the app do the rest.
 
 ## ✨ Features
 - **VLC Media Player Sync:** Automatically tracks your anime watch progress directly from VLC.
-- **Web Browser Sync:** Integrates with **Bilibili** and **Crunchyroll** via the included Chrome Extension!
+- **Web Browser Sync:** Integrates with **YouTube (Muse, Ani-One)**, **Bilibili**, and **Crunchyroll** via the included Chrome Extension!
 - **Discord Rich Presence:** Show off the anime you're currently watching, the exact episode, and the time remaining on your Discord profile.
 - **AniList Auto-Update:** Once you reach the end of an episode (last 5 minutes), the app automatically updates your AniList watch count.
 - **Smart Detection:** Seamlessly switches between VLC and Web Browsers without any manual configuration.
@@ -42,12 +42,12 @@ For the app to know what you're watching:
 7. Under *Lua HTTP*, set a **Password** (e.g., `1234`).
 8. Restart VLC.
 
-**For Web Browser Sync (Crunchyroll & Bilibili):**
+**For Web Browser Sync (Crunchyroll, Bilibili, YouTube):**
 If you prefer to stream your anime online, you can install the included Chrome Extension:
 1. Open Google Chrome (or Edge/Brave) and navigate to `chrome://extensions/`.
 2. Enable **Developer mode** in the top right corner.
 3. Click **Load unpacked** and select the `extensions/chrome` folder located inside the `anilist-vlc` source code directory.
-4. Start watching on Crunchyroll or Bilibili, and the desktop app will automatically detect it!
+4. Start watching on Crunchyroll, Bilibili, or YouTube (Muse Asia/Ani-One), and the desktop app will automatically detect it!
 
 ### 3. Setup the App
 1. Open **AniList VLC Sync**.

@@ -102,6 +102,10 @@ export class ServiceManager {
         host: config.vlc?.host || '127.0.0.1',
         port: config.vlc?.port || '8080',
       },
+      web: {
+        listening: !!this.webAdapter,
+        port: 47392
+      },
       anilist: {
         authenticated: !!config.anilist?.accessToken,
         username: config.anilist?.username || 'Unknown',

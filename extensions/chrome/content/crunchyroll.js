@@ -1,16 +1,15 @@
 // Crunchyroll Content Script
-const SYNC_URL = 'http://127.0.0.1:47392/api/sync';
 
 function sendSyncData(data) {
-  fetch(SYNC_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  }).catch(err => {
-    // Desktop app might not be running, silently fail
-  });
+  try {
+    chrome.runtime.sendMessage({ type: 'SYNC_DATA', data }, (response) => {
+      if (chrome.runtime.lastError) {
+        // Background script not ready or error
+      }
+    });
+  } catch (err) {
+    // Silently fail
+  }
 }
 
 function parseCrunchyroll() {
@@ -55,4 +54,18 @@ function parseCrunchyroll() {
 }
 
 // Poll every 5 seconds
-setInterval(parseCrunchyroll, 5000);
+setInterval(() => {
+  try {
+    if (chrome && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.get(['enable_crunchyroll'], (result) => {
+        if (result.enable_crunchyroll !== false) {
+          parseCrunchyroll();
+        }
+      });
+    } else {
+      parseCrunchyroll();
+    }
+  } catch (e) {
+    parseCrunchyroll();
+  }
+}, 5000);
