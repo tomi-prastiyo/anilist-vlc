@@ -26,13 +26,14 @@ This application runs quietly in the background and connects to **VLC Media Play
 ## 🚀 How to Install (For Users)
 
 ### 1. Download the App
-- Go to the [Releases](../../releases) tab on GitHub and download the latest `.exe` setup file.
+- Go to the [Releases](../../releases) tab on GitHub.
+- Download the latest `.exe` setup file (e.g., `AniList VLC Sync Setup 1.1.0.exe`).
 - Install and open the application.
 
-### 2. Configure Your Setup
-For the app to know what you're watching:
+### 2. Configure Your Trackers
+For the app to know what you're watching, you need to set up either VLC or the Web Extension (or both!).
 
-**For VLC Media Player:**
+**Method A: VLC Media Player Sync**
 1. Open VLC Media Player.
 2. Go to **Tools > Preferences** (or press `Ctrl+P`).
 3. At the bottom left under *Show settings*, select **All**.
@@ -42,19 +43,21 @@ For the app to know what you're watching:
 7. Under *Lua HTTP*, set a **Password** (e.g., `1234`).
 8. Restart VLC.
 
-**For Web Browser Sync (Crunchyroll, Bilibili, YouTube):**
-If you prefer to stream your anime online, you can install the included Chrome Extension:
-1. Open Google Chrome (or Edge/Brave) and navigate to `chrome://extensions/`.
-2. Enable **Developer mode** in the top right corner.
-3. Click **Load unpacked** and select the `extensions/chrome` folder located inside the `anilist-vlc` source code directory.
-4. Start watching on Crunchyroll, Bilibili, or YouTube (Muse Asia/Ani-One), and the desktop app will automatically detect it!
+**Method B: Web Browser Sync (Crunchyroll, Bilibili, YouTube)**
+If you prefer to stream your anime online, install our custom Chrome Extension:
+1. Download the `AniList-Web-Sync-1.1.0.zip` file from the [Releases](../../releases) tab.
+2. Extract (unzip) the file into a dedicated folder on your computer (Do not delete this folder later).
+3. Open Google Chrome (or Edge/Brave) and navigate to `chrome://extensions/`.
+4. Enable **Developer mode** using the toggle in the top right corner.
+5. Click **Load unpacked** in the top left and select the folder where you extracted the `.zip` file.
+6. Start watching on Crunchyroll, Bilibili, or YouTube (Muse Asia/Ani-One), and the desktop app will detect it instantly!
 
-### 3. Setup the App
-1. Open **AniList VLC Sync**.
+### 3. Connect to AniList
+1. Open the **AniList VLC Sync** desktop app.
 2. In the **Settings** menu, enter your AniList Username.
-3. If using VLC, enter the VLC port (`8080` by default) and the password you created.
-4. Go to the **Status** page, click **Connect AniList**, authorize the app, and paste the PIN provided.
-5. You're ready to go! Open an anime in VLC and watch the magic happen.
+3. (Optional) If you are using VLC, enter the VLC port (`8080` by default) and the password you created in Method A.
+4. Go to the **Status** page, click **Connect AniList**, authorize the app in your browser, and paste the PIN provided.
+5. You're ready to go! Start watching and let the magic happen.
 
 ---
 
