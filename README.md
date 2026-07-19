@@ -9,13 +9,16 @@
 ## 🌟 What is this?
 Ever tired of manually updating your episode count on AniList after watching anime on VLC? Want to show off what you're currently watching to your Discord friends? **AniList VLC Sync** is here for you!
 
-This application runs quietly in the background and connects **VLC Media Player**, **AniList**, and **Discord**. Just sit back, watch your downloaded anime, and let the app do the rest.
+This application runs quietly in the background and connects to **VLC Media Player**, **Web Browsers (Crunchyroll & Bilibili)**, **AniList**, and **Discord**. Just sit back, watch your anime, and let the app do the rest.
 
 ## ✨ Features
+- **VLC Media Player Sync:** Automatically tracks your anime watch progress directly from VLC.
+- **Web Browser Sync:** Integrates with **Bilibili** and **Crunchyroll** via the included Chrome Extension!
+- **Discord Rich Presence:** Show off the anime you're currently watching, the exact episode, and the time remaining on your Discord profile.
+- **AniList Auto-Update:** Once you reach the end of an episode (last 5 minutes), the app automatically updates your AniList watch count.
+- **Smart Detection:** Seamlessly switches between VLC and Web Browsers without any manual configuration.
 - **🎨 Beautiful GUI**: Easy-to-use modern desktop interface.
-- **🔄 Auto-Sync to AniList**: Automatically detects when you finish an episode and updates your AniList progress!
-- **💬 Discord Rich Presence**: Shows the anime title, episode number, cover image, and elapsed/remaining time directly on your Discord profile.
-- **🧠 Smart Title Detection**: Intelligently extracts the anime name and episode number from messy filenames (e.g., `[SubsPlease] Girls und Panzer - 11 (1080p).mkv`).
+- **🧠 Smart Title Detection**: Intelligently extracts the anime name and episode number from messy filenames.
 - **🔒 Secure Login**: Simple PIN-based AniList login directly from the app.
 
 ---
@@ -26,8 +29,10 @@ This application runs quietly in the background and connects **VLC Media Player*
 - Go to the [Releases](../../releases) tab on GitHub and download the latest `.exe` setup file.
 - Install and open the application.
 
-### 2. Configure VLC Media Player
-For the app to know what you're watching, you must enable VLC's web interface:
+### 2. Configure Your Setup
+For the app to know what you're watching:
+
+**For VLC Media Player:**
 1. Open VLC Media Player.
 2. Go to **Tools > Preferences** (or press `Ctrl+P`).
 3. At the bottom left under *Show settings*, select **All**.
@@ -37,10 +42,17 @@ For the app to know what you're watching, you must enable VLC's web interface:
 7. Under *Lua HTTP*, set a **Password** (e.g., `1234`).
 8. Restart VLC.
 
+**For Web Browser Sync (Crunchyroll & Bilibili):**
+If you prefer to stream your anime online, you can install the included Chrome Extension:
+1. Open Google Chrome (or Edge/Brave) and navigate to `chrome://extensions/`.
+2. Enable **Developer mode** in the top right corner.
+3. Click **Load unpacked** and select the `extensions/chrome` folder located inside the `anilist-vlc` source code directory.
+4. Start watching on Crunchyroll or Bilibili, and the desktop app will automatically detect it!
+
 ### 3. Setup the App
 1. Open **AniList VLC Sync**.
 2. In the **Settings** menu, enter your AniList Username.
-3. Enter the VLC port (`8080` by default) and the password you just created in VLC.
+3. If using VLC, enter the VLC port (`8080` by default) and the password you created.
 4. Go to the **Status** page, click **Connect AniList**, authorize the app, and paste the PIN provided.
 5. You're ready to go! Open an anime in VLC and watch the magic happen.
 
