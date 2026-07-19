@@ -5,6 +5,7 @@ import {
   PlaybackStatus,
   PlaybackState,
 } from "../../domain";
+import { logger } from "../logger";
 
 interface VlcConfig {
   host: string;
@@ -32,7 +33,7 @@ export class VlcPlayerAdapter implements IMediaPlayerAdapter {
 
       return this.parseStatusXml(xmlString);
     } catch (error) {
-      console.error("Error getting VLC status:", error);
+      // Don't log here, fetchStatusXml already logs it
       return null;
     }
   }
@@ -41,8 +42,12 @@ export class VlcPlayerAdapter implements IMediaPlayerAdapter {
     try {
       const response = await axios.get(this.baseUrl, { auth: this.auth });
       return response.data;
-    } catch (error) {
-      console.error("Error fetching VLC XML:", error);
+    } catch (error: any) {
+      if (error.code === 'ECONNREFUSED') {
+        logger.debug("VLC is not running or unreachable (Connection Refused).");
+      } else {
+        logger.warn("Error fetching VLC XML: " + error.message);
+      }
       return null;
     }
   }

@@ -1,4 +1,5 @@
 import { IAuthService } from "../../domain";
+import { logger } from "../../infrastructure/logger";
 
 /**
  * Use Case: Authenticate User
@@ -23,7 +24,7 @@ export class AuthenticateUserUseCase {
     if (!hasJwtToken) {
       const token = await this.authService.generateToken();
       if (!token) {
-        console.error(
+        logger.error(
           "Failed to generate access token. Please check your auth code and try again.",
         );
         process.exit(1);

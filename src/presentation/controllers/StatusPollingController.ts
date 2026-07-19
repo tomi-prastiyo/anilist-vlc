@@ -12,6 +12,7 @@ import {
   BuildPresenceUseCase,
   AuthenticateUserUseCase,
 } from "../../application";
+import { logger } from "../../infrastructure/logger";
 
 interface WatchState {
   title: string;
@@ -64,7 +65,7 @@ export class StatusPollingController {
    */
   async start(pollingIntervalMs = 15000): Promise<void> {
     this.presenceService.onReady(async () => {
-      console.log("Connected as", this.presenceService.getUsername());
+      logger.info(`Connected as ${this.presenceService.getUsername()}`);
 
       // Handle authentication if needed
       const didAuthenticate = await this.authenticate.execute(
@@ -73,8 +74,8 @@ export class StatusPollingController {
       );
 
       if (didAuthenticate) {
-        console.log("\n✅ Authentication completed! Tokens saved to .env.");
-        console.log("Please restart the application to use the new tokens.");
+        logger.info("\n✅ Authentication completed! Tokens saved to config.");
+        logger.info("Please restart the application to use the new tokens.");
         process.exit(0);
       }
 
@@ -83,40 +84,53 @@ export class StatusPollingController {
       setInterval(() => this.pollStatus(), pollingIntervalMs);
     });
 
-    await this.presenceService.connect();
+    try {
+      await this.presenceService.connect();
+    } catch (error) {
+      logger.error("Failed to connect to Discord initially:", error);
+      // We could retry here, but discord-rpc might try reconnecting internally
+    }
   }
 
   private async pollStatus(): Promise<void> {
-    const presenceData = await this.buildPresence.execute(this.username);
+    try {
+      const presenceData = await this.buildPresence.execute(this.username);
 
-    if (!presenceData) {
-      console.log("Error retrieving playback status");
-      await this.presenceService.clearActivity();
-      return;
+      if (!presenceData) {
+        // Only log once if state changed to avoid spamming the log when VLC is closed
+        if (this.state.previousState !== "Idle") {
+          logger.warn("Unable to retrieve playback status (VLC might be closed or stopped).");
+          this.state.previousState = "Idle";
+        }
+        await this.presenceService.clearActivity();
+        return;
+      }
+
+      const { activity, parsedTitle, playbackStatus, stateLabel } = presenceData;
+
+      // Check for title/episode change
+      if (this.hasMediaChanged(parsedTitle)) {
+        this.state.title = parsedTitle.title;
+        this.state.episode = parsedTitle.episode;
+        this.state.shouldUpdateAniList = true;
+      }
+
+      // Log state changes
+      if (stateLabel !== this.state.previousState) {
+        logger.info(
+          `${stateLabel} "${parsedTitle.title}" - Episode ${parsedTitle.episode}`,
+        );
+        this.state.previousState = stateLabel;
+      }
+
+      // Update Discord presence
+      await this.presenceService.setActivity(activity);
+
+      // Update AniList near episode end
+      await this.maybeUpdateAniList(playbackStatus, parsedTitle);
+    } catch (error) {
+      logger.error("Error in polling loop:", error);
     }
-
-    const { activity, parsedTitle, playbackStatus, stateLabel } = presenceData;
-
-    // Check for title/episode change
-    if (this.hasMediaChanged(parsedTitle)) {
-      this.state.title = parsedTitle.title;
-      this.state.episode = parsedTitle.episode;
-      this.state.shouldUpdateAniList = true;
-    }
-
-    // Log state changes
-    if (stateLabel !== this.state.previousState) {
-      console.log(
-        `${stateLabel} "${parsedTitle.title}" - Episode ${parsedTitle.episode}`,
-      );
-      this.state.previousState = stateLabel;
-    }
-
-    // Update Discord presence
-    await this.presenceService.setActivity(activity);
-
-    // Update AniList near episode end
-    await this.maybeUpdateAniList(playbackStatus, parsedTitle);
   }
 
   private hasMediaChanged(parsed: ParsedTitle): boolean {
@@ -133,7 +147,7 @@ export class StatusPollingController {
     const nearEnd = timeRemaining < UPDATE_THRESHOLD_SECONDS;
 
     if (nearEnd && this.state.shouldUpdateAniList && parsed.episode) {
-      console.log("Attempting to update AniList...");
+      logger.info("Attempting to update AniList...");
 
       try {
         const mediaId = await this.resolveMediaId.execute(
@@ -148,12 +162,12 @@ export class StatusPollingController {
             this.username,
           );
 
-          console.log(
+          logger.info(
             `Updated AniList: ${parsed.title} - Episode ${result.episode}`,
           );
         }
       } catch (error) {
-        console.error("Error updating AniList:", error);
+        logger.error("Error updating AniList:", error);
       }
 
       this.state.shouldUpdateAniList = false;

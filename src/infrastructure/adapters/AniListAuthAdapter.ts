@@ -1,9 +1,8 @@
 import open from "open";
 import axios from "axios";
 import readline from "readline";
-import fs from "fs";
-import path from "path";
 import { IAuthService } from "../../domain";
+import { configStore } from "../config/ConfigStore";
 
 interface AuthConfig {
   clientId: string;
@@ -32,8 +31,10 @@ export class AniListAuthAdapter implements IAuthService {
   async promptAndSaveAuthCode(): Promise<void> {
     const code = await this.promptUser("Enter the authorization code: ");
     this.config.authCode = code;
-    this.updateEnvFile("ANILIST_AUTHTOKEN", code);
-    console.log("Authentication code saved!");
+    
+    // Save to ConfigStore
+    configStore.updateConfig({ anilist: { authCode: code } });
+    console.log("Authentication code saved to config!");
   }
 
   async generateToken(): Promise<string | null> {
@@ -48,8 +49,10 @@ export class AniListAuthAdapter implements IAuthService {
 
       if (response.status === 200) {
         const accessToken = response.data.access_token;
-        this.updateEnvFile("ANILIST_JWT", accessToken);
-        console.log("Token generated and saved successfully");
+        
+        // Save to ConfigStore
+        configStore.updateConfig({ anilist: { accessToken: accessToken } });
+        console.log("Token generated and saved successfully to config.");
         return accessToken;
       }
 
@@ -76,24 +79,5 @@ export class AniListAuthAdapter implements IAuthService {
         resolve(answer);
       });
     });
-  }
-
-  private updateEnvFile(key: string, value: string): void {
-    let envContent = "";
-
-    try {
-      envContent = fs.readFileSync(this.config.envPath, "utf8");
-    } catch {
-      // File doesn't exist, will be created
-    }
-
-    const regex = new RegExp(`${key}=.*`);
-    if (envContent.includes(`${key}=`)) {
-      envContent = envContent.replace(regex, `${key}=${value}`);
-    } else {
-      envContent += `\n${key}=${value}\n`;
-    }
-
-    fs.writeFileSync(this.config.envPath, envContent, "utf8");
   }
 }

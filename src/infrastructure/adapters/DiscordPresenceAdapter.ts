@@ -1,5 +1,6 @@
 import { Client } from "@xhayper/discord-rpc";
 import { IPresenceService, DiscordActivity } from "../../domain";
+import { logger } from "../logger";
 
 /**
  * Discord Rich Presence Adapter
@@ -15,11 +16,16 @@ export class DiscordPresenceAdapter implements IPresenceService {
 
   async connect(): Promise<void> {
     this.client.on("ready", () => {
-      console.log("Discord RPC connected as", this.client.user?.username);
+      logger.info(`Discord RPC connected as ${this.client.user?.username}`);
       this.readyCallback?.();
     });
 
-    await this.client.login();
+    try {
+      await this.client.login();
+    } catch (error: any) {
+      logger.warn("Could not connect to Discord RPC (is Discord running?): " + error.message);
+      throw error;
+    }
   }
 
   async setActivity(activity: DiscordActivity): Promise<void> {

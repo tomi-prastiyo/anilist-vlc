@@ -1,11 +1,12 @@
 import { config as dotenvConfig } from "dotenv";
 import path from "path";
+import { configStore } from "./ConfigStore";
 
 dotenvConfig();
 
 /**
  * Application Configuration
- * Centralized configuration loaded from environment variables
+ * Centralized configuration loaded from environment variables and JSON config
  */
 export interface AppConfig {
   vlc: {
@@ -29,22 +30,24 @@ export interface AppConfig {
   };
 }
 
+const userConfig = configStore.getConfig();
+
 export const appConfig: AppConfig = {
   vlc: {
     host: "localhost",
-    port: Number(process.env.VLC_PORT) || 8080,
-    password: process.env.VLC_PW || "",
+    port: userConfig.vlc?.port || Number(process.env.VLC_PORT) || 8080,
+    password: userConfig.vlc?.password || process.env.VLC_PW || "",
   },
   anilist: {
     clientId: process.env.ANILIST_CLIENT_ID || "",
     clientSecret: process.env.ANILIST_CLIENT_SECRET || "",
     redirectUri: process.env.ANILIST_REDIRECT || "",
     username: process.env.ANILIST_USERNAME || "",
-    authCode: process.env.ANILIST_AUTHTOKEN || "",
-    accessToken: process.env.ANILIST_JWT || "",
+    authCode: userConfig.anilist?.authCode || process.env.ANILIST_AUTHTOKEN || "",
+    accessToken: userConfig.anilist?.accessToken || process.env.ANILIST_JWT || "",
   },
   discord: {
-    clientId: process.env.DISCORD_CLIENT || "",
+    clientId: userConfig.discord?.clientId || process.env.DISCORD_CLIENT || "",
   },
   paths: {
     envFile: path.resolve(process.cwd(), ".env"),

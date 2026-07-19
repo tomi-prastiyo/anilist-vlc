@@ -1,3 +1,5 @@
+import { logger } from "../logger";
+
 /**
  * Rate Limit Manager for AniList API
  * Handles rate limiting (90 requests/minute), burst limiting, and retry logic
@@ -35,7 +37,7 @@ export class RateLimitManager {
 
     // Out of requests, need to wait for reset
     const waitTime = this.resetTime - now;
-    console.warn(
+    logger.warn(
       `[RateLimit] Out of requests. Waiting ${Math.ceil(waitTime / 1000)}s until reset...`,
     );
     await this.sleep(waitTime + 100);
@@ -89,7 +91,7 @@ export class RateLimitManager {
     this.remainingRequests = 0;
     this.resetTime = Date.now() + waitSeconds * 1000;
 
-    console.warn(
+    logger.warn(
       `[RateLimit] Rate limit exceeded. Waiting ${waitSeconds}s before retrying...`,
     );
     await this.sleep(waitSeconds * 1000);
@@ -151,7 +153,7 @@ export class RateLimitManager {
         try {
           await request();
         } catch (error) {
-          console.error("[RateLimit] Error processing queued request:", error);
+          logger.error("[RateLimit] Error processing queued request:", error);
         }
       }
     }
