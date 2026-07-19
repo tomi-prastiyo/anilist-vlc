@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="assets/icon.png" width="128" alt="AniList VLC Sync Logo" />
   <h1>🎬 AniList VLC Sync 🎮</h1>
   <p>A beautiful desktop application that automatically syncs your anime watch progress from VLC Media Player to AniList and displays your real-time status on Discord.</p>
 </div>
@@ -46,9 +47,8 @@ For the app to know what you're watching, you must enable VLC's web interface:
 ---
 
 ## 📸 Previews
-*(Tip: Add your screenshot images here later by uploading them to GitHub!)*
-- `![Dashboard Screenshot](link_to_image)`
-- `![Discord Profile Screenshot](link_to_image)`
+
+![Dashboard Screenshot](assets/dashboard_preview.png)
 
 ---
 

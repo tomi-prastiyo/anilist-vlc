@@ -21,6 +21,7 @@ function createWindow() {
     height: 700,
     show: false, // Don't show immediately
     title: "AniList VLC Sync",
+    icon: path.join(__dirname, '../../../assets/icon.png'),
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

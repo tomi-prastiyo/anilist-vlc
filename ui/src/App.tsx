@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, LayoutDashboard, MonitorPlay, LogOut, MessageSquare } from 'lucide-react';
+import { MonitorPlay, LogOut, MessageSquare, Check, X, AlertTriangle, Key } from 'lucide-react';
 import './index.css';
 
 interface ServiceStatus {
@@ -56,7 +56,7 @@ function App() {
 
   const handleSaveSettings = async () => {
     if (window.api) {
-      setSaveStatus('Saving and restarting services...');
+      setSaveStatus('Saving settings...');
       const newConfig = {
         vlc: { port: parseInt(vlcPort), password: vlcPw },
         discord: { clientId: discordId },
@@ -69,7 +69,7 @@ function App() {
       };
       await window.api.updateConfig(newConfig);
       await fetchStatus();
-      setSaveStatus('Settings saved! Services are running with new config.');
+      setSaveStatus('Settings saved successfully!');
       setTimeout(() => setSaveStatus(''), 3000);
     }
   };
@@ -82,7 +82,7 @@ function App() {
         setAuthMode(true);
       } catch (err: any) {
         setAuthError(err.message || 'Failed to start login. Make sure Client ID is set in Settings.');
-        setAuthMode(true); // Show the auth mode panel so they can see the error
+        setAuthMode(true);
       }
     }
   };
@@ -104,10 +104,10 @@ function App() {
           setAuthCode('');
           await fetchStatus();
         } else {
-          setAuthError('Failed to verify code. Please ensure Client ID, Secret, and Redirect URI are correct in Settings.');
+          setAuthError('Invalid PIN code or Redirect URI mismatch.');
         }
       } catch (err: any) {
-        setAuthError(err.message || 'Error occurred while verifying code.');
+        setAuthError(err.message || 'Error verifying PIN code.');
       }
     }
   };
@@ -124,198 +124,187 @@ function App() {
             className={`tab ${activeTab === 'dashboard' ? 'active' : ''}`}
             onClick={() => setActiveTab('dashboard')}
           >
-            <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
-              <LayoutDashboard size={18} />
-              Dashboard
-            </div>
+            Dashboard
           </button>
           <button 
             className={`tab ${activeTab === 'settings' ? 'active' : ''}`}
             onClick={() => setActiveTab('settings')}
           >
-            <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
-              <Settings size={18} />
-              Settings
-            </div>
+            Settings
           </button>
         </div>
       </div>
 
       <div className="panel">
         {activeTab === 'dashboard' ? (
-          <div>
-            <h2 style={{ marginBottom: '1.5rem', fontWeight: 600 }}>Live System Status</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="connection-list">
               
-              {/* VLC Card */}
-              <div className="status-card">
-                <div className="status-icon" style={{ background: 'rgba(249, 115, 22, 0.1)', color: '#f97316' }}>
-                  <MonitorPlay size={24} />
+              {/* VLC Connection */}
+              <div className="connection-item">
+                <div className="connection-info">
+                  <div className="connection-icon vlc">
+                    <MonitorPlay size={22} />
+                  </div>
+                  <div className="connection-details">
+                    <h3>VLC Media Player</h3>
+                    <p>{status?.vlc.configured ? `Monitoring port ${status.vlc.port}` : 'Not configured'}</p>
+                  </div>
                 </div>
-                <div className="status-info">
-                  <h3>VLC Media Player</h3>
-                  <p>
-                    <span className={`indicator ${status?.vlc.configured ? 'online' : 'offline'}`}></span>
-                    {status?.vlc.configured ? `Monitoring on ${status.vlc.host}:${status.vlc.port}` : 'Not configured'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Discord Card */}
-              <div className="status-card">
-                <div className="status-icon" style={{ background: 'rgba(88, 101, 242, 0.1)', color: '#5865F2' }}>
-                  <MessageSquare size={24} />
-                </div>
-                <div className="status-info">
-                  <h3>Discord RPC</h3>
-                  <p>
-                    <span className={`indicator ${status?.discord.connected ? 'online' : 'offline'}`}></span>
-                    {status?.discord.connected ? `Connected as ${status.discord.username}` : (status?.discord.error ? `Error: ${status.discord.error}` : 'Disconnected (Retrying...)')}
-                  </p>
+                <div className={`status-indicator ${status?.vlc.configured ? 'online' : 'warning'}`}>
+                  <div className="pulse-dot"></div>
+                  {status?.vlc.configured ? 'Connected' : 'Missing Config'}
                 </div>
               </div>
 
-              {/* AniList Card */}
-              <div className="status-card">
-                <div className="status-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)' }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12 6v6l4 4"/></svg>
+              {/* Discord Connection */}
+              <div className="connection-item">
+                <div className="connection-info">
+                  <div className="connection-icon discord">
+                    <MessageSquare size={22} />
+                  </div>
+                  <div className="connection-details">
+                    <h3>Discord Presence</h3>
+                    <p>{status?.discord.connected ? `Playing as ${status.discord.username}` : (status?.discord.error ? status.discord.error : 'Searching for Discord...')}</p>
+                  </div>
                 </div>
-                <div className="status-info" style={{ flex: 1 }}>
-                  <h3>AniList Connection</h3>
-                  <p>
-                    <span className={`indicator ${status?.anilist.authenticated ? 'online' : 'offline'}`}></span>
-                    {status?.anilist.authenticated ? `Logged in as ${status.anilist.username}` : 'Authentication Required'}
-                  </p>
+                <div className={`status-indicator ${status?.discord.connected ? 'online' : 'offline'}`}>
+                  <div className="pulse-dot"></div>
+                  {status?.discord.connected ? 'Active' : 'Disconnected'}
                 </div>
-                {status?.anilist.authenticated && (
-                  <button className="btn btn-secondary" onClick={handleLogout} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
-                    Logout
-                  </button>
-                )}
               </div>
+
+              {/* AniList Connection */}
+              <div className="connection-item">
+                <div className="connection-info">
+                  <div className="connection-icon anilist">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12 6v6l4 4"/></svg>
+                  </div>
+                  <div className="connection-details">
+                    <h3>AniList Sync</h3>
+                    <p>{status?.anilist.authenticated ? `Logged in as ${status.anilist.username}` : 'Action required to sync progress'}</p>
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  {status?.anilist.authenticated ? (
+                    <>
+                      <div className="status-indicator online">
+                        <div className="pulse-dot"></div>
+                        Synced
+                      </div>
+                      <button className="btn btn-secondary" onClick={handleLogout} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <button className="btn btn-primary" onClick={handleLogin} style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                      <Key size={16} /> Login
+                    </button>
+                  )}
+                </div>
+              </div>
+
             </div>
 
-            <div style={{ marginTop: '2rem' }}>
-              {status && !status.anilist.authenticated && !authMode && (
-                <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--danger)', padding: '1rem', borderRadius: '0.5rem', marginBottom: '1rem' }}>
-                  <p style={{ color: '#fca5a5', marginBottom: '0.5rem' }}>You need to authenticate with AniList to sync progress.</p>
-                  <button className="btn btn-primary" onClick={handleLogin}>Authenticate with AniList</button>
-                </div>
-              )}
-
-              {authMode && (
-                <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid var(--accent)', padding: '1.5rem', borderRadius: '0.5rem', marginBottom: '1rem' }}>
-                  <p style={{ marginBottom: '1rem' }}>Your browser should have opened the AniList authorization page. Please approve it, then paste the code below:</p>
+            {/* Inline Auth Modal */}
+            {authMode && (
+              <div className="auth-overlay">
+                <h3 style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <AlertTriangle size={18} color="var(--accent)" /> Authentication Required
+                </h3>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                  Please authorize the application in your browser, then paste the PIN code below.
+                </p>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <input 
                     type="text" 
                     className="form-input" 
                     value={authCode} 
                     onChange={e => setAuthCode(e.target.value)} 
-                    placeholder="Paste authorization code here..."
-                    style={{ marginBottom: '1rem' }}
+                    placeholder="Enter PIN code..."
+                    style={{ flex: 1, marginBottom: 0 }}
                   />
-                  {authError && <p style={{ color: 'var(--danger)', marginBottom: '1rem' }}>{authError}</p>}
-                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button className="btn btn-primary" onClick={handleSubmitCode}>Verify Code</button>
-                    <button className="btn btn-secondary" onClick={() => setAuthMode(false)}>Cancel</button>
-                  </div>
+                  <button className="btn btn-primary" onClick={handleSubmitCode}>
+                    <Check size={18} /> Verify
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => setAuthMode(false)}>
+                    <X size={18} />
+                  </button>
                 </div>
-              )}
-            </div>
+                {authError && <p style={{ color: 'var(--danger)', marginTop: '0.75rem', fontSize: '0.85rem' }}>{authError}</p>}
+              </div>
+            )}
 
-            <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ marginTop: 'auto', paddingTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
               <button className="btn btn-secondary" onClick={() => window.api?.quitApp()}>
-                <LogOut size={18} /> Quit App
+                <LogOut size={16} /> Quit Application
               </button>
             </div>
+            
           </div>
         ) : (
-          <div>
-            <h2 style={{ marginBottom: '1.5rem', fontWeight: 600 }}>Configuration</h2>
+          <div style={{ animation: 'fadeIn 0.3s ease' }}>
             
-            <div className="form-group">
-              <label>VLC HTTP Port</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                value={vlcPort} 
-                onChange={e => setVlcPort(e.target.value)} 
-                placeholder="8080"
-              />
+            <div className="settings-section">
+              <h3><MonitorPlay size={20} /> VLC Player Configuration</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label>HTTP Port</label>
+                  <input type="text" className="form-input" value={vlcPort} onChange={e => setVlcPort(e.target.value)} placeholder="8080" />
+                </div>
+                <div className="form-group">
+                  <label>HTTP Password</label>
+                  <input type="password" className="form-input" value={vlcPw} onChange={e => setVlcPw(e.target.value)} placeholder="Password (if set)" />
+                </div>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label>VLC Password</label>
-              <input 
-                type="password" 
-                className="form-input" 
-                value={vlcPw} 
-                onChange={e => setVlcPw(e.target.value)} 
-                placeholder="Leave blank if none"
-              />
+            <div className="settings-section">
+              <h3><MessageSquare size={20} /> Discord Integration</h3>
+              <div className="form-group">
+                <label>Discord App Client ID</label>
+                <input type="text" className="form-input" value={discordId} onChange={e => setDiscordId(e.target.value)} placeholder="Optional: Use custom Discord App" />
+                <span className="form-hint">Leave this blank to use the default AniList VLC Sync presence.</span>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label>Discord Client ID (Optional)</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                value={discordId} 
-                onChange={e => setDiscordId(e.target.value)} 
-                placeholder="Discord App ID"
-              />
+            <div className="settings-section">
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12 6v6l4 4"/></svg>
+                AniList API Configuration
+              </h3>
+              
+              <div className="form-group">
+                <label>AniList Username</label>
+                <input type="text" className="form-input" value={anilistUsername} onChange={e => setAnilistUsername(e.target.value)} placeholder="e.g. PdBear" />
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label>Client ID</label>
+                  <input type="text" className="form-input" value={anilistClientId} onChange={e => setAnilistClientId(e.target.value)} placeholder="Developer Client ID" />
+                </div>
+                <div className="form-group">
+                  <label>Redirect URI</label>
+                  <input type="text" className="form-input" value={anilistRedirectUri} onChange={e => setAnilistRedirectUri(e.target.value)} placeholder="e.g. pdbear555" />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label>Client Secret</label>
+                <input type="password" className="form-input" value={anilistClientSecret} onChange={e => setAnilistClientSecret(e.target.value)} placeholder="Developer Client Secret" />
+              </div>
             </div>
 
-            <div className="form-group">
-              <label>AniList Username (Required)</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                value={anilistUsername} 
-                onChange={e => setAnilistUsername(e.target.value)} 
-                placeholder="e.g. PdBear"
-              />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', marginTop: '1.5rem' }}>
+              {saveStatus && <span style={{ color: 'var(--success)', fontSize: '0.9rem', animation: 'fadeIn 0.3s' }}>{saveStatus}</span>}
+              <button className="btn btn-primary" onClick={handleSaveSettings}>
+                <Check size={18} /> Save Changes
+              </button>
             </div>
-
-            <div className="form-group">
-              <label>AniList Client ID (Required)</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                value={anilistClientId} 
-                onChange={e => setAnilistClientId(e.target.value)} 
-                placeholder="e.g. 16101"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>AniList Client Secret (Required)</label>
-              <input 
-                type="password" 
-                className="form-input" 
-                value={anilistClientSecret} 
-                onChange={e => setAnilistClientSecret(e.target.value)} 
-                placeholder="Enter your Client Secret"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>AniList Redirect URI</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                value={anilistRedirectUri} 
-                onChange={e => setAnilistRedirectUri(e.target.value)} 
-                placeholder="e.g. pdbear555 or https://anilist.co/api/v2/oauth/pin"
-              />
-              <small style={{ color: 'var(--text-muted)' }}>Must match the Redirect URI in your AniList Developer settings.</small>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem' }}>
-              <span style={{ color: 'var(--success)' }}>{saveStatus}</span>
-              <button className="btn btn-primary" onClick={handleSaveSettings}>Save & Restart Services</button>
-            </div>
+            
           </div>
         )}
       </div>
