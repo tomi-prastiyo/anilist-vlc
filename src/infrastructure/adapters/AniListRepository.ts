@@ -4,12 +4,14 @@ import {
   MediaListEntry,
   MediaStatus,
 } from "../../domain";
+import { RateLimitManager } from "./RateLimitManager";
+import { RateLimitStatusService } from "./RateLimitStatusService";
 
 const API_URL = "https://graphql.anilist.co";
 
 interface GraphQLResponse<T> {
   data: T;
-  errors?: Array<{ message: string }>;
+  errors?: Array<{ message: string; status?: number }>;
 }
 
 /**
@@ -17,35 +19,101 @@ interface GraphQLResponse<T> {
  * Implements IAnimeRepository for AniList integration
  */
 export class AniListRepository implements IAnimeRepository {
-  constructor(private readonly accessToken?: string) {}
+  private readonly rateLimitManager: RateLimitManager;
+
+  constructor(private readonly accessToken?: string) {
+    this.rateLimitManager = new RateLimitManager();
+    // Register with status service for monitoring
+    RateLimitStatusService.getInstance().registerManager(
+      "anilist",
+      this.rateLimitManager,
+    );
+  }
 
   private async query<T>(
     query: string,
     variables: Record<string, any>,
     authenticated = false,
   ): Promise<T> {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    };
+    return this.rateLimitManager.queueRequest(async () => {
+      let retries = 0;
+      const maxRetries = 3;
 
-    if (authenticated && this.accessToken) {
-      headers.Authorization = `Bearer ${this.accessToken}`;
-    }
+      while (retries < maxRetries) {
+        try {
+          // Wait for available rate limit slot
+          await this.rateLimitManager.waitForAvailableSlot();
 
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ query, variables }),
+          const headers: Record<string, string> = {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          };
+
+          if (authenticated && this.accessToken) {
+            headers.Authorization = `Bearer ${this.accessToken}`;
+          }
+
+          const response = await fetch(API_URL, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ query, variables }),
+          });
+
+          // Update rate limit info from response headers
+          this.rateLimitManager.updateFromHeaders(response.headers);
+
+          // Handle 429 Too Many Requests
+          if (response.status === 429) {
+            await this.rateLimitManager.handleRateLimitError(response.headers);
+            retries++;
+            continue;
+          }
+
+          const data: GraphQLResponse<T> = await response.json();
+
+          // Handle GraphQL errors
+          if (data.errors?.length) {
+            const error = data.errors[0];
+
+            // If it's a rate limit error from GraphQL response
+            if (error.status === 429) {
+              await this.rateLimitManager.handleRateLimitError(
+                response.headers,
+              );
+              retries++;
+              continue;
+            }
+
+            throw new Error(error.message);
+          }
+
+          return data.data;
+        } catch (error) {
+          // If it's a rate limit error, retry after waiting
+          if (
+            error instanceof Error &&
+            error.message.includes("Too Many Requests")
+          ) {
+            retries++;
+            if (retries < maxRetries) {
+              console.warn(
+                `[RateLimit] Retrying request (attempt ${retries + 1}/${maxRetries})...`,
+              );
+              await this.sleep(Math.pow(2, retries) * 1000); // Exponential backoff
+              continue;
+            }
+          }
+
+          throw error;
+        }
+      }
+
+      throw new Error("Max retries exceeded for rate limited request");
     });
+  }
 
-    const data: GraphQLResponse<T> = await response.json();
-
-    if (data.errors?.length) {
-      throw new Error(data.errors[0].message);
-    }
-
-    return data.data;
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async getWatchingList(username: string): Promise<MediaListEntry[]> {
