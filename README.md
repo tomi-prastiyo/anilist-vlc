@@ -1,215 +1,93 @@
-# anilist-vlc 🎬🎮
-
-A TypeScript application that bridges VLC Media Player, AniList, and Discord Rich Presence. Automatically syncs your anime watch progress to AniList while displaying real-time playback status on Discord.
-
----
-
-## Features
-
-- **Automatic Progress Sync** — Detects episode completion in VLC and updates AniList watch progress
-- **Discord Rich Presence** — Displays current anime, episode, and playback state to Discord
-- **Smart Title Parsing** — Extracts anime titles and episode numbers from various filename formats
-- **OAuth Authentication** — Secure AniList API integration with token management
+<div align="center">
+  <h1>🎬 AniList VLC Sync 🎮</h1>
+  <p>A beautiful desktop application that automatically syncs your anime watch progress from VLC Media Player to AniList and displays your real-time status on Discord.</p>
+</div>
 
 ---
 
-## Architecture
+## 🌟 What is this?
+Ever tired of manually updating your episode count on AniList after watching anime on VLC? Want to show off what you're currently watching to your Discord friends? **AniList VLC Sync** is here for you!
 
-This project follows **Clean Architecture** principles with clear separation of concerns and dependency inversion.
+This application runs quietly in the background and connects **VLC Media Player**, **AniList**, and **Discord**. Just sit back, watch your downloaded anime, and let the app do the rest.
 
-```
-src/
-├── main/                          # Composition Root
-│   ├── index.ts                   # Application entry point
-│   └── bootstrap.ts               # Dependency injection & wiring
-│
-├── domain/                        # Core Business Logic (no dependencies)
-│   ├── entities/                  # Business objects
-│   │   ├── Media.ts               # Anime media entity
-│   │   ├── PlaybackStatus.ts      # Playback state entity
-│   │   ├── User.ts                # User profile entity
-│   │   └── DiscordActivity.ts     # Discord presence payload
-│   └── ports/                     # Interface contracts
-│       ├── IAnimeRepository.ts    # Anime data operations
-│       ├── IMediaPlayerAdapter.ts # Media player interface
-│       ├── IPresenceService.ts    # Rich presence interface
-│       ├── IAuthService.ts        # Authentication interface
-│       └── ITitleParser.ts        # Title parsing interface
-│
-├── application/                   # Use Cases (depends on domain only)
-│   └── useCases/
-│       ├── ResolveMediaIdUseCase.ts   # Match title to AniList ID
-│       ├── UpdateProgressUseCase.ts   # Update episode progress
-│       ├── BuildPresenceUseCase.ts    # Build Discord activity
-│       └── AuthenticateUserUseCase.ts # OAuth authentication flow
-│
-├── infrastructure/                # External Adapters (implements ports)
-│   ├── adapters/
-│   │   ├── AniListRepository.ts      # AniList GraphQL client
-│   │   ├── VlcPlayerAdapter.ts       # VLC HTTP API client
-│   │   ├── DiscordPresenceAdapter.ts # Discord RPC client
-│   │   ├── AniListAuthAdapter.ts     # OAuth flow handler
-│   │   └── AnimeTitleParser.ts       # Filename parser
-│   └── config/
-│       └── AppConfig.ts              # Environment configuration
-│
-└── presentation/                  # Controllers & UI
-    └── controllers/
-        └── StatusPollingController.ts # Main orchestration loop
-```
-
-### Layer Responsibilities
-
-| Layer              | Purpose                                                                             | Depends On          |
-| ------------------ | ----------------------------------------------------------------------------------- | ------------------- |
-| **Domain**         | Core entities & port interfaces. Framework-agnostic business rules.                 | Nothing             |
-| **Application**    | Use cases that orchestrate domain logic. Single-responsibility operations.          | Domain              |
-| **Infrastructure** | Concrete adapters for external services (APIs, databases, file system).             | Domain              |
-| **Presentation**   | Controllers that handle user interaction and coordinate use cases.                  | Application, Domain |
-| **Main**           | Composition root. Wires dependencies together. Only place with concrete references. | All layers          |
-
-### Dependency Flow
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Main (Bootstrap)                       │
-│         Creates concrete instances, injects dependencies    │
-└─────────────────────────────────────────────────────────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        ▼                     ▼                     ▼
-┌───────────────┐   ┌─────────────────┐   ┌─────────────────┐
-│ Presentation  │   │ Infrastructure  │   │   Application   │
-│  Controllers  │──▶│    Adapters     │◀──│    Use Cases    │
-└───────────────┘   └─────────────────┘   └─────────────────┘
-        │                     │                     │
-        └─────────────────────┼─────────────────────┘
-                              ▼
-                    ┌─────────────────┐
-                    │     Domain      │
-                    │ Entities, Ports │
-                    └─────────────────┘
-```
+## ✨ Features
+- **🎨 Beautiful GUI**: Easy-to-use modern desktop interface.
+- **🔄 Auto-Sync to AniList**: Automatically detects when you finish an episode and updates your AniList progress!
+- **💬 Discord Rich Presence**: Shows the anime title, episode number, cover image, and elapsed/remaining time directly on your Discord profile.
+- **🧠 Smart Title Detection**: Intelligently extracts the anime name and episode number from messy filenames (e.g., `[SubsPlease] Girls und Panzer - 11 (1080p).mkv`).
+- **🔒 Secure Login**: Simple PIN-based AniList login directly from the app.
 
 ---
 
-## Core Modules
+## 🚀 How to Install (For Users)
 
-### Domain Layer
+### 1. Download the App
+- Go to the [Releases](../../releases) tab on GitHub and download the latest `.exe` setup file.
+- Install and open the application.
 
-**Entities** — Pure data structures with no external dependencies:
+### 2. Configure VLC Media Player
+For the app to know what you're watching, you must enable VLC's web interface:
+1. Open VLC Media Player.
+2. Go to **Tools > Preferences** (or press `Ctrl+P`).
+3. At the bottom left under *Show settings*, select **All**.
+4. In the left menu, navigate to **Interface > Main interfaces**.
+5. Check the box for **Web**.
+6. Expand **Main interfaces** and click on **Lua**.
+7. Under *Lua HTTP*, set a **Password** (e.g., `1234`).
+8. Restart VLC.
 
-- `Media` — Anime media with id, title, cover image
-- `PlaybackStatus` — Current playback state (title, time, length, state)
-- `ParsedTitle` — Extracted title and episode number
-- `DiscordActivity` — Rich presence payload
-
-**Ports** — Interface contracts for dependency inversion:
-
-- `IAnimeRepository` — Anime data operations (list, search, update)
-- `IMediaPlayerAdapter` — Media player status polling
-- `IPresenceService` — Rich presence connection and updates
-- `IAuthService` — OAuth authentication flow
-- `ITitleParser` — Filename parsing logic
-
-### Application Layer
-
-**Use Cases** — Single-responsibility operations:
-
-- `ResolveMediaIdUseCase` — Matches parsed title to AniList media ID
-- `UpdateProgressUseCase` — Updates episode progress with status transitions
-- `BuildPresenceUseCase` — Constructs Discord activity from playback data
-- `AuthenticateUserUseCase` — Orchestrates OAuth flow
-
-### Infrastructure Layer
-
-**Adapters** — Concrete implementations of domain ports:
-
-- `AniListRepository` — GraphQL client for AniList API
-- `VlcPlayerAdapter` — HTTP client for VLC status.xml
-- `DiscordPresenceAdapter` — Discord RPC client wrapper
-- `AniListAuthAdapter` — OAuth code/token flow
-- `AnimeTitleParser` — Regex-based filename parsing
+### 3. Setup the App
+1. Open **AniList VLC Sync**.
+2. In the **Settings** menu, enter your AniList Username.
+3. Enter the VLC port (`8080` by default) and the password you just created in VLC.
+4. Go to the **Status** page, click **Connect AniList**, authorize the app, and paste the PIN provided.
+5. You're ready to go! Open an anime in VLC and watch the magic happen.
 
 ---
 
-## Configuration
-
-Create a `.env` file in the project root:
-
-```env
-# VLC Media Player
-VLC_PW=your_vlc_password
-VLC_PORT=8080
-
-# AniList OAuth
-ANILIST_CLIENT_ID=your_client_id
-ANILIST_CLIENT_SECRET=your_client_secret
-ANILIST_REDIRECT=your_redirect_uri
-ANILIST_USERNAME=your_username
-
-# Discord
-DISCORD_CLIENT=your_discord_app_id
-```
-
-> **Note:** `ANILIST_AUTHTOKEN` and `ANILIST_JWT` are generated automatically during first-run authentication.
+## 📸 Previews
+*(Tip: Add your screenshot images here later by uploading them to GitHub!)*
+- `![Dashboard Screenshot](link_to_image)`
+- `![Discord Profile Screenshot](link_to_image)`
 
 ---
 
-## Usage
+## 💻 For Developers
 
-```bash
-# Install dependencies
-npm install
+If you want to contribute or build the app from source, you'll be happy to know that this project is structured using **Clean Architecture** principles!
 
-# Development mode (hot reload)
-npm run dev
+### Tech Stack
+- **Frontend**: React, Vite, TypeScript.
+- **Backend**: Electron, Node.js, Winston (Logger).
+- **APIs**: AniList GraphQL API, `@xhayper/discord-rpc`, VLC HTTP API.
 
-# Production
-npm start
-```
+### Build Instructions
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yourusername/anilist-vlc.git
+   cd anilist-vlc
+   ```
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+3. **Run in Development Mode**:
+   ```bash
+   npm run electron:dev
+   ```
+4. **Build the Production Executable (.exe)**:
+   ```bash
+   npm run electron:build
+   ```
 
-### Prerequisites
-
-1. **VLC** — Enable HTTP interface: `Tools > Preferences > Main Interfaces > Web`
-2. **AniList** — Create API client at [AniList Developer Settings](https://anilist.co/settings/developer)
-3. **Discord** — Create application at [Discord Developer Portal](https://discord.com/developers/applications)
-
----
-
-## Extending the Application
-
-### Adding a New Media Player
-
-1. Create an adapter in `infrastructure/adapters/` implementing `IMediaPlayerAdapter`
-2. Update `bootstrap.ts` to inject your new adapter
-
-```typescript
-// Example: MPV adapter
-export class MpvPlayerAdapter implements IMediaPlayerAdapter {
-  async getPlaybackStatus(): Promise<PlaybackStatus | null> {
-    // Implement MPV IPC communication
-  }
-}
-```
-
-### Adding a New Anime Provider
-
-1. Create a repository in `infrastructure/adapters/` implementing `IAnimeRepository`
-2. Update `bootstrap.ts` to use your new provider
+### Architecture Overview
+The application backend is separated into strict layers to maintain a clean dependency flow:
+- **Domain**: Pure business rules and entities (`DiscordActivity`, `PlaybackStatus`).
+- **Application**: Use cases like `BuildPresenceUseCase` and `UpdateProgressUseCase`.
+- **Infrastructure**: Concrete implementations (VLC API adapter, Discord RPC adapter).
+- **Presentation**: Electron IPC handlers and background polling controllers.
 
 ---
 
-## Tech Stack
-
-- **Runtime:** Node.js + TypeScript
-- **Discord RPC:** `@xhayper/discord-rpc`
-- **HTTP Client:** `axios`
-- **XML Parsing:** `xml-js`
-- **Environment:** `dotenv`
-
----
-
-## License
-
-ISC
+## 📜 License
+This project is licensed under the ISC License. Feel free to fork, modify, and distribute!
