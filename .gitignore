@@ -66,3 +66,12 @@ yarn-error.log*
 *.swp
 *.swo
 *.DS_Store
+
+# UI / Vite
+ui/node_modules/
+ui/dist/
+ui/.vite/
+
+# Electron Builder Output
+release/
+out/

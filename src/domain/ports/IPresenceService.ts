@@ -12,6 +12,11 @@ export interface IPresenceService {
   connect(): Promise<void>;
 
   /**
+   * Disconnect from the presence service
+   */
+  disconnect(): Promise<void>;
+
+  /**
    * Update the current activity/presence
    */
   setActivity(activity: DiscordActivity): Promise<void>;
@@ -30,4 +35,9 @@ export interface IPresenceService {
    * Get the connected username
    */
   getUsername(): string | undefined;
+
+  /**
+   * Get the last connection error
+   */
+  getLastError(): string | undefined;
 }

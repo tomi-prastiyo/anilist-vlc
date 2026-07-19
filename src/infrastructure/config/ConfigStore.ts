@@ -7,12 +7,17 @@ import os from 'os';
  */
 export interface UserConfig {
   vlc?: {
+    host?: string;
     port?: number;
     password?: string;
   };
   anilist?: {
+    username?: string;
     authCode?: string;
     accessToken?: string;
+    clientId?: string;
+    clientSecret?: string;
+    redirectUri?: string;
   };
   discord?: {
     clientId?: string;

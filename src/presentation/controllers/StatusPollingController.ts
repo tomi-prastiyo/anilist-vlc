@@ -10,7 +10,6 @@ import {
   ResolveMediaIdUseCase,
   UpdateProgressUseCase,
   BuildPresenceUseCase,
-  AuthenticateUserUseCase,
 } from "../../application";
 import { logger } from "../../infrastructure/logger";
 
@@ -31,7 +30,6 @@ export class StatusPollingController {
   private readonly resolveMediaId: ResolveMediaIdUseCase;
   private readonly updateProgress: UpdateProgressUseCase;
   private readonly buildPresence: BuildPresenceUseCase;
-  private readonly authenticate: AuthenticateUserUseCase;
 
   private state: WatchState = {
     title: "",
@@ -39,6 +37,8 @@ export class StatusPollingController {
     previousState: "",
     shouldUpdateAniList: true,
   };
+
+  private timerId?: NodeJS.Timeout;
 
   constructor(
     private readonly presenceService: IPresenceService,
@@ -57,32 +57,21 @@ export class StatusPollingController {
       mediaPlayer,
       titleParser,
     );
-    this.authenticate = new AuthenticateUserUseCase(authService);
   }
 
   /**
    * Start the polling controller
    */
   async start(pollingIntervalMs = 15000): Promise<void> {
-    this.presenceService.onReady(async () => {
+    this.stop(); // Ensure previous interval is cleared if called twice
+
+    this.presenceService.onReady(() => {
       logger.info(`Connected as ${this.presenceService.getUsername()}`);
-
-      // Handle authentication if needed
-      const didAuthenticate = await this.authenticate.execute(
-        this.hasAuthCode,
-        this.hasAccessToken,
-      );
-
-      if (didAuthenticate) {
-        logger.info("\n✅ Authentication completed! Tokens saved to config.");
-        logger.info("Please restart the application to use the new tokens.");
-        process.exit(0);
-      }
-
-      // Start polling
-      await this.pollStatus();
-      setInterval(() => this.pollStatus(), pollingIntervalMs);
     });
+
+    // Start polling regardless of discord connection
+    await this.pollStatus();
+    this.timerId = setInterval(() => this.pollStatus(), pollingIntervalMs);
 
     try {
       await this.presenceService.connect();
@@ -90,6 +79,20 @@ export class StatusPollingController {
       logger.error("Failed to connect to Discord initially:", error);
       // We could retry here, but discord-rpc might try reconnecting internally
     }
+  }
+
+  /**
+   * Stop the polling controller
+   */
+  stop(): void {
+    if (this.timerId) {
+      clearInterval(this.timerId);
+      this.timerId = undefined;
+    }
+    // Also clear activity if possible
+    this.presenceService.clearActivity().catch(err => {
+       logger.warn("Could not clear discord activity on stop: " + err);
+    });
   }
 
   private async pollStatus(): Promise<void> {

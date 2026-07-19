@@ -8,12 +8,12 @@ export interface DiscordActivity {
   state: string;
   instance: boolean;
   largeImageKey: string;
-  largeImageUrl: string;
+  largeImageUrl?: string;
   largeImageText: string;
   smallImageKey: string;
-  smallImageUrl: string;
+  smallImageUrl?: string;
   smallImageText: string;
-  type: number;
+  type?: number;
   startTimestamp?: number;
   endTimestamp?: number;
   buttons?: Array<{ label: string; url: string }>;

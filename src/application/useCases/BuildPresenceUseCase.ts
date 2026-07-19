@@ -175,23 +175,26 @@ export class BuildPresenceUseCase {
     const state = stateParts.join("  ");
 
     const activity: DiscordActivity = {
-      details,
+      details: this.truncate(details, 128),
       detailsUrl: image.animeUrl,
-      state,
+      state: this.truncate(state, 128),
       instance: true,
       largeImageKey: image.imageUrl,
       largeImageUrl: image.animeUrl || image.imageUrl,
-      largeImageText: [
-        image.imageText || parsed.title,
-        image.season && image.year ? `${image.season} ${image.year}` : null,
-        image.genres?.slice(0, 2).join(", ") ?? null,
-      ]
-        .filter(Boolean)
-        .join(" · "),
+      largeImageText: this.truncate(
+        [
+          image.imageText || parsed.title,
+          image.season && image.year ? `${image.season} ${image.year}` : null,
+          image.genres?.slice(0, 2).join(", ") ?? null,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        128
+      ),
       smallImageKey: image.avatarUrl,
       smallImageUrl: `https://anilist.co/user/${username}`,
-      smallImageText: `AniList: ${image.avatarText}`,
-      type: 3, // Watching
+      smallImageText: this.truncate(`AniList: ${image.avatarText}`, 128),
+      type: 3, // 3 means "Watching"
     };
 
     if (isPlaying) {
@@ -221,5 +224,10 @@ export class BuildPresenceUseCase {
 
   private capitalize(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  private truncate(str: string, maxLen: number): string {
+    if (str.length <= maxLen) return str;
+    return str.slice(0, maxLen - 3) + "...";
   }
 }
