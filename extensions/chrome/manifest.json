@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "AniList Web Sync",
+  "version": "1.1.0",
+  "description": "Syncs Bilibili and Crunchyroll anime progress to AniList VLC Sync desktop app.",
+  "permissions": ["storage"],
+  "icons": {
+    "128": "icons/icon.png"
+  },
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_icon": {
+      "128": "icons/icon.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": [
+    "http://127.0.0.1:47392/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.bilibili.tv/*"
+      ],
+      "js": ["content/bilibili.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "*://*.crunchyroll.com/*"
+      ],
+      "js": ["content/crunchyroll.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "js": ["content/youtube.js"],
+      "run_at": "document_end"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="header">
+    <h3>🌐 AniList Web Sync</h3>
+    <p>Select which sites you want to track.</p>
+  </div>
+  
+  <div class="toggle-container">
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <span class="title">Bilibili (bstation)</span>
+        <span class="subtitle">bilibili.tv</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle-bilibili" checked>
+        <span class="slider round"></span>
+      </label>
+    </div>
+    
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <span class="title">Crunchyroll</span>
+        <span class="subtitle">crunchyroll.com</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle-crunchyroll" checked>
+        <span class="slider round"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <span class="title">YouTube (Muse, Ani-One)</span>
+        <span class="subtitle">youtube.com</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle-youtube" checked>
+        <span class="slider round"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="footer">
+    Make sure your AniList VLC Sync desktop app is running in the background!
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

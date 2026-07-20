@@ -1,6 +1,8 @@
 import {
   AniListRepository,
   VlcPlayerAdapter,
+  WebMediaPlayerAdapter,
+  MultiMediaPlayerAdapter,
   DiscordPresenceAdapter,
   AniListAuthAdapter,
   AnimeTitleParser,
@@ -13,7 +15,8 @@ import { configStore } from "../infrastructure/config/ConfigStore";
 export class ServiceManager {
   private controller: StatusPollingController | null = null;
   public presenceService: DiscordPresenceAdapter | null = null;
-  private mediaPlayer: VlcPlayerAdapter | null = null;
+  private mediaPlayer: MultiMediaPlayerAdapter | null = null;
+  private webAdapter: WebMediaPlayerAdapter | null = null;
 
   async start(): Promise<void> {
     logger.info("🎬 Starting anilist-vlc backend service via ServiceManager...");
@@ -22,11 +25,15 @@ export class ServiceManager {
     // Create infrastructure adapters
     const animeRepository = new AniListRepository(appConfig.anilist.accessToken);
 
-    this.mediaPlayer = new VlcPlayerAdapter({
+    const vlcAdapter = new VlcPlayerAdapter({
       host: appConfig.vlc.host,
       port: appConfig.vlc.port,
       password: appConfig.vlc.password,
     });
+
+    this.webAdapter = new WebMediaPlayerAdapter();
+
+    this.mediaPlayer = new MultiMediaPlayerAdapter([vlcAdapter, this.webAdapter]);
 
     this.presenceService = new DiscordPresenceAdapter(
       appConfig.discord.clientId,
@@ -64,6 +71,11 @@ export class ServiceManager {
       this.controller = null;
     }
     
+    if (this.webAdapter) {
+      this.webAdapter.stop();
+      this.webAdapter = null;
+    }
+    
     // Disconnect services if needed
     if (this.presenceService) {
       this.presenceService.disconnect();
@@ -89,6 +101,10 @@ export class ServiceManager {
         configured: !!config.vlc?.port,
         host: config.vlc?.host || '127.0.0.1',
         port: config.vlc?.port || '8080',
+      },
+      web: {
+        listening: !!this.webAdapter,
+        port: 47392
       },
       anilist: {
         authenticated: !!config.anilist?.accessToken,

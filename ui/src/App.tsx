@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { MonitorPlay, LogOut, MessageSquare, Check, X, AlertTriangle, Key } from 'lucide-react';
+import { MonitorPlay, LogOut, MessageSquare, Check, X, AlertTriangle, Key, Globe } from 'lucide-react';
 import './index.css';
 
 interface ServiceStatus {
   discord: { connected: boolean; username: string; error?: string };
   vlc: { configured: boolean; host: string; port: string };
+  web: { listening: boolean; port: number };
   anilist: { authenticated: boolean; username: string };
 }
 
@@ -155,6 +156,23 @@ function App() {
                 <div className={`status-indicator ${status?.vlc.configured ? 'online' : 'warning'}`}>
                   <div className="pulse-dot"></div>
                   {status?.vlc.configured ? 'Connected' : 'Missing Config'}
+                </div>
+              </div>
+
+              {/* Web Browser Sync Connection */}
+              <div className="connection-item">
+                <div className="connection-info">
+                  <div className="connection-icon" style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6' }}>
+                    <Globe size={22} />
+                  </div>
+                  <div className="connection-details">
+                    <h3>Web Browser Sync</h3>
+                    <p>{status?.web.listening ? `Monitoring port ${status.web.port}` : 'Extension server offline'}</p>
+                  </div>
+                </div>
+                <div className={`status-indicator ${status?.web.listening ? 'online' : 'offline'}`}>
+                  <div className="pulse-dot"></div>
+                  {status?.web.listening ? 'Ready for Extension' : 'Offline'}
                 </div>
               </div>
 
