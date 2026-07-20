@@ -16,26 +16,47 @@ function parseCrunchyroll() {
   const video = document.querySelector('video');
   if (!video) return;
 
-  // Crunchyroll page title format: "Anime Name - Episode X - Episode Title - Watch on Crunchyroll"
-  const fullTitle = document.title || "";
-  let title = fullTitle;
+  let title = "";
   let episode = "";
 
-  const epMatch = fullTitle.match(/Episode\s+(\d+)/i);
+  // 1. Try to get Anime Title directly from DOM (Player Overlay)
+  // Crunchyroll usually puts the series name in an anchor tag pointing to the series page
+  const titleEl = document.querySelector('h1.heading--nKNOf a[href*="/series/"], a[class*="show-title-link"], a[data-t="show-title-link"]');
+  if (titleEl && titleEl.innerText) {
+    title = titleEl.innerText.trim();
+  }
+
+  // 2. Parse episode from document.title
+  const fullTitle = document.title || "";
+  const epMatch = fullTitle.match(/(?:Episode|Episodio|Episódio|Épisode|Bölüm)\s+(\d+)/i);
   if (epMatch) {
     episode = epMatch[1];
-    title = fullTitle.split('-')[0].trim();
-  } else {
-      // Sometimes it's e.g. "One Piece - 1071 - Luffy's Peak"
-      const parts = fullTitle.split('-');
-      if (parts.length >= 2) {
-          title = parts[0].trim();
-          const potentialEp = parts[1].trim();
-          if (!isNaN(Number(potentialEp))) {
-              episode = potentialEp;
-          }
-      }
   }
+
+  // 3. Fallback to document.title parsing if DOM extraction failed
+  if (!title) {
+    let cleanTitle = fullTitle.replace(/^(Watch|Tonton|Menonton|Ver|Regarder|Guarda|Assistir|Sehe)\s+/i, '');
+    if (epMatch) {
+      title = cleanTitle.split(/(?:Episode|Episodio|Episódio|Épisode|Bölüm)/i)[0].trim();
+    } else {
+      const parts = cleanTitle.split('-');
+      if (parts.length >= 2) {
+        title = parts[0].trim();
+        const potentialEp = parts[1].trim();
+        if (!isNaN(Number(potentialEp))) {
+          episode = potentialEp;
+        }
+      } else {
+        title = cleanTitle.split('-')[0].trim();
+      }
+    }
+  }
+
+  // Final cleanup: remove trailing "Crunchyroll", dashes, and "Season X" / "Musim X"
+  title = title.replace(/-?\s*Crunchyroll$/i, '')
+               .replace(/-$/, '')
+               .replace(/\s+(?:Season|Musim|Part)\s+\d+.*$/i, '')
+               .trim();
 
   const length = Math.floor(video.duration || 0);
   const time = Math.floor(video.currentTime || 0);

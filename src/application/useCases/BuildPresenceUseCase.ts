@@ -81,11 +81,23 @@ export class BuildPresenceUseCase {
       // Try to get anime cover image and details
       const searchResults = await this.animeRepository.searchMedia(title);
       if (searchResults.length > 0) {
-        const media = await this.animeRepository.getMediaCover(
-          searchResults[0].id,
-        );
+        let bestMatchId = searchResults[0].id;
+        
+        // Prioritize the season/part the user is actually watching
+        try {
+          const watchingList = await this.animeRepository.getWatchingList(username);
+          const userMediaIds = new Set(watchingList.map(entry => entry.mediaId));
+          const match = searchResults.find(r => userMediaIds.has(r.id));
+          if (match) {
+            bestMatchId = match.id;
+          }
+        } catch (e) {
+          // Silently fallback to first result if fetching watching list fails
+        }
+
+        const media = await this.animeRepository.getMediaCover(bestMatchId);
         const avatarUrl = await this.animeRepository.getUserAvatar(username);
-        const animeUrl = `https://anilist.co/anime/${searchResults[0].id}`;
+        const animeUrl = `https://anilist.co/anime/${bestMatchId}`;
         if (media?.coverImage) {
           result = {
             imageUrl: media.coverImage,
