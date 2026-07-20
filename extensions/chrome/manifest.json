@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AniList Web Sync",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Syncs Bilibili and Crunchyroll anime progress to AniList VLC Sync desktop app.",
   "permissions": ["storage"],
   "icons": {

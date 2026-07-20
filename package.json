@@ -1,7 +1,7 @@
 {
   "name": "anilist-vlc",
-  "version": "1.1.0",
-  "description": "Sync VLC and Web Anime playback to AniList & Discord",
+  "version": "1.1.1",
+  "description": "Auto-sync your local VLC and Web anime playback to AniList with Discord Rich Presence",
   "main": "./dist/presentation/electron/main.js",
   "scripts": {
     "start": "ts-node src/main/index.ts",
