@@ -123,7 +123,10 @@ export class AniListRepository implements IAnimeRepository {
           pageInfo { currentPage, hasNextPage }
           mediaList (userName: $userName, status_in: [PLANNING, CURRENT, REPEATING], type: ANIME, sort: MEDIA_TITLE_ROMAJI) {
             mediaId
-            media { title { romaji } }
+            media { 
+              title { romaji english } 
+              synonyms 
+            }
             progress
             status
           }
@@ -142,7 +145,10 @@ export class AniListRepository implements IAnimeRepository {
           pageInfo: { hasNextPage: boolean };
           mediaList: Array<{
             mediaId: number;
-            media: { title: { romaji: string } };
+            media: { 
+              title: { romaji: string; english?: string };
+              synonyms?: string[];
+            };
             progress: number;
             status: MediaStatus;
           }>;
@@ -152,6 +158,8 @@ export class AniListRepository implements IAnimeRepository {
       const entries = data.Page.mediaList.map((item) => ({
         mediaId: item.mediaId,
         title: item.media.title.romaji,
+        englishTitle: item.media.title.english,
+        synonyms: item.media.synonyms,
         progress: item.progress,
         status: item.status,
       }));
@@ -199,7 +207,41 @@ export class AniListRepository implements IAnimeRepository {
       };
     }>(query, { search: title, page: 1, perPage: 20 });
 
-    return data.Page.media.map((item) => ({
+    let mediaList = data.Page.media;
+
+    // Fallback: If no results found, try translating the title to English
+    if (mediaList.length === 0) {
+      try {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(title)}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const json = await res.json();
+          const translatedTitle = json[0]?.[0]?.[0];
+          if (translatedTitle && translatedTitle.toLowerCase() !== title.toLowerCase()) {
+            const translatedData = await this.query<{
+              Page: {
+                media: Array<{
+                  id: number;
+                  title: { romaji: string };
+                  coverImage: { large: string };
+                  episodes?: number;
+                  genres?: string[];
+                  averageScore?: number;
+                  status?: string;
+                  season?: string;
+                  startDate?: { year?: number; month?: number; day?: number };
+                }>;
+              };
+            }>(query, { search: translatedTitle, page: 1, perPage: 20 });
+            mediaList = translatedData.Page.media;
+          }
+        }
+      } catch (e) {
+        // Silently ignore translation errors
+      }
+    }
+
+    return mediaList.map((item) => ({
       id: item.id,
       title: item.title.romaji,
       coverImage: item.coverImage?.large,

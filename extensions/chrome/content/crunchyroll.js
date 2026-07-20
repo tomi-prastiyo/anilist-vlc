@@ -28,12 +28,12 @@ function parseCrunchyroll() {
 
   // 2. Parse episode from document.title
   const fullTitle = document.title || "";
-  const epMatch = fullTitle.match(/(?:Episode|Episodio|Episódio|Épisode|Bölüm)\s+(\d+)/i);
+  let epMatch = fullTitle.match(/(?:Episode|Episodio|Episódio|Épisode|Bölüm|Ep|E)\s*[:\.]?\s*(\d+)/i);
   if (epMatch) {
     episode = epMatch[1];
   }
 
-  // 3. Fallback to document.title parsing if DOM extraction failed
+  // 3. Fallback for title if DOM failed
   if (!title) {
     let cleanTitle = fullTitle.replace(/^(Watch|Tonton|Menonton|Ver|Regarder|Guarda|Assistir|Sehe)\s+/i, '');
     if (epMatch) {
@@ -42,12 +42,33 @@ function parseCrunchyroll() {
       const parts = cleanTitle.split('-');
       if (parts.length >= 2) {
         title = parts[0].trim();
-        const potentialEp = parts[1].trim();
-        if (!isNaN(Number(potentialEp))) {
-          episode = potentialEp;
-        }
       } else {
         title = cleanTitle.split('-')[0].trim();
+      }
+    }
+  }
+
+  // 4. Aggressive fallback for episode if still not found
+  if (!episode) {
+    // Look in DOM text for Episode \d+ or E12
+    const headers = document.querySelectorAll('h1, h2, h3, h4, h5');
+    for (const h of headers) {
+      const match = h.innerText.match(/(?:Episode|Episodio|Episódio|Épisode|Bölüm|Ep|E)\s*[:\.]?\s*(\d+)/i);
+      if (match) {
+        episode = match[1];
+        break;
+      }
+    }
+
+    // Try to extract isolated number from title parts (e.g. "Anime - 4 - Title")
+    if (!episode) {
+      const parts = fullTitle.split('-');
+      for (let i = 1; i < parts.length; i++) {
+        const potentialEp = parts[i].trim();
+        if (/^\d+$/.test(potentialEp)) {
+          episode = potentialEp;
+          break;
+        }
       }
     }
   }

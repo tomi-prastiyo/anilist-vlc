@@ -19,6 +19,8 @@ export interface Media {
 export interface MediaListEntry {
   mediaId: number;
   title: string;
+  englishTitle?: string;
+  synonyms?: string[];
   progress: number;
   status: MediaStatus;
 }

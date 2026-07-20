@@ -78,27 +78,61 @@ export class BuildPresenceUseCase {
     let result: ImageData | null = null;
 
     try {
-      // Try to get anime cover image and details
-      const searchResults = await this.animeRepository.searchMedia(title);
-      if (searchResults.length > 0) {
-        let bestMatchId = searchResults[0].id;
-        
-        // Prioritize the season/part the user is actually watching
-        try {
-          const watchingList = await this.animeRepository.getWatchingList(username);
-          const userMediaIds = new Set(watchingList.map(entry => entry.mediaId));
-          const match = searchResults.find(r => userMediaIds.has(r.id));
-          if (match) {
-            bestMatchId = match.id;
+        // Try to get anime cover image and details
+        let searchResults = await this.animeRepository.searchMedia(title);
+        let bestMatchId: number | undefined;
+
+        if (searchResults.length > 0) {
+          bestMatchId = searchResults[0].id;
+          // Prioritize the season/part the user is actually watching
+          try {
+            const watchingList = await this.animeRepository.getWatchingList(username);
+            const userMediaIds = new Set(watchingList.map(entry => entry.mediaId));
+            const match = searchResults.find(r => userMediaIds.has(r.id));
+            if (match) {
+              bestMatchId = match.id;
+            }
+          } catch (e) {
+            // Silently fallback
           }
-        } catch (e) {
-          // Silently fallback to first result if fetching watching list fails
+        } else {
+          // Fuzzy match against watching list if search yields no results (due to extreme localization)
+          try {
+            const watchingList = await this.animeRepository.getWatchingList(username);
+            let searchTitle = title;
+            
+            // Translate the original title to English to maximize overlap with AniList's English titles
+            try {
+              const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(title)}`;
+              const res = await fetch(url);
+              if (res.ok) {
+                const json = await res.json();
+                if (json[0]?.[0]?.[0]) searchTitle = json[0][0][0];
+              }
+            } catch (e) {}
+
+            const searchWords = searchTitle.toLowerCase().split(/\W+/).filter(w => w.length > 2);
+            
+            let maxOverlap = 0;
+            for (const entry of watchingList) {
+              const entryTitles = [entry.title, entry.englishTitle, ...(entry.synonyms || [])].filter(Boolean) as string[];
+              for (const t of entryTitles) {
+                const tWords = t.toLowerCase().split(/\W+/).filter(w => w.length > 2);
+                const overlap = searchWords.filter(w => tWords.includes(w)).length;
+                if (overlap > maxOverlap && overlap >= 1) {
+                  maxOverlap = overlap;
+                  bestMatchId = entry.mediaId;
+                }
+              }
+            }
+          } catch (e) {}
         }
 
-        const media = await this.animeRepository.getMediaCover(bestMatchId);
-        const avatarUrl = await this.animeRepository.getUserAvatar(username);
-        const animeUrl = `https://anilist.co/anime/${bestMatchId}`;
-        if (media?.coverImage) {
+        if (bestMatchId) {
+          const media = await this.animeRepository.getMediaCover(bestMatchId);
+          const avatarUrl = await this.animeRepository.getUserAvatar(username);
+          const animeUrl = `https://anilist.co/anime/${bestMatchId}`;
+          if (media?.coverImage) {
           result = {
             imageUrl: media.coverImage,
             imageText: media.title,

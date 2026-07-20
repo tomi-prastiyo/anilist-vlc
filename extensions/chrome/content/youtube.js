@@ -28,7 +28,7 @@ function parseYouTube() {
   const epMatch = fullTitle.match(/(?:Episode|Ep\.?|EP)\s*(\d+)/i);
   if (epMatch) {
     episode = epMatch[1];
-    title = fullTitle.split(/(?:Episode|Ep\.?|EP)/i)[0];
+    title = fullTitle.substring(0, epMatch.index).trim();
   } else {
     // Sometimes it's just "Anime Title - 12"
     const dashMatch = fullTitle.match(/\s+-\s+(\d+)(?:\s+|$)/);
